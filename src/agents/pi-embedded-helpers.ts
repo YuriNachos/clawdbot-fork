@@ -1,9 +1,15 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { AgentMessage, AgentToolResult } from "@mariozechner/pi-agent-core";
+import type {
+  AgentMessage,
+  AgentToolResult,
+} from "@mariozechner/pi-agent-core";
 import type { AssistantMessage } from "@mariozechner/pi-ai";
-import { normalizeThinkLevel, type ThinkLevel } from "../auto-reply/thinking.js";
+import {
+  normalizeThinkLevel,
+  type ThinkLevel,
+} from "../auto-reply/thinking.js";
 
 import { sanitizeContentBlocksImages } from "./tool-images.js";
 import type { WorkspaceBootstrapFile } from "./workspace.js";
@@ -20,7 +26,13 @@ function trimBootstrapContent(content: string, fileName: string): string {
 
   const head = trimmed.slice(0, BOOTSTRAP_HEAD_CHARS);
   const tail = trimmed.slice(-BOOTSTRAP_TAIL_CHARS);
-  return [head, "", `[...truncated, read ${fileName} for full content...]`, "", tail].join("\n");
+  return [
+    head,
+    "",
+    `[...truncated, read ${fileName} for full content...]`,
+    "",
+    tail,
+  ].join("\n");
 }
 
 export async function ensureSessionHeader(params: {
@@ -51,7 +63,7 @@ type ContentBlock = AgentToolResult<unknown>["content"][number];
 
 export async function sanitizeSessionMessagesImages(
   messages: AgentMessage[],
-  label: string
+  label: string,
 ): Promise<AgentMessage[]> {
   // We sanitize historical session messages because Anthropic can reject a request
   // if the transcript contains oversized base64 images (see MAX_IMAGE_DIMENSION_PX).
@@ -68,7 +80,7 @@ export async function sanitizeSessionMessagesImages(
       const content = Array.isArray(toolMsg.content) ? toolMsg.content : [];
       const nextContent = (await sanitizeContentBlocksImages(
         content as ContentBlock[],
-        label
+        label,
       )) as unknown as typeof toolMsg.content;
       out.push({ ...toolMsg, content: nextContent });
       continue;
@@ -80,7 +92,7 @@ export async function sanitizeSessionMessagesImages(
       if (Array.isArray(content)) {
         const nextContent = (await sanitizeContentBlocksImages(
           content as unknown as ContentBlock[],
-          label
+          label,
         )) as unknown as typeof userMsg.content;
         out.push({ ...userMsg, content: nextContent });
         continue;
@@ -100,12 +112,12 @@ export async function sanitizeSessionMessagesImages(
               typeof block === "object" &&
               (block as { type?: unknown }).type === "text" &&
               (block as { text?: unknown }).text === ""
-            )
+            ),
         );
         // Also sanitize images in remaining blocks
         const sanitizedContent = (await sanitizeContentBlocksImages(
           filteredContent as unknown as ContentBlock[],
-          label
+          label,
         )) as unknown as typeof asstMsg.content;
         out.push({ ...asstMsg, content: sanitizedContent });
         continue;
@@ -123,8 +135,12 @@ export function isGoogleModelApi(api?: string | null): boolean {
   return api === "google-gemini-cli" || api === "google-generative-ai";
 }
 
-export function sanitizeGoogleTurnOrdering(messages: AgentMessage[]): AgentMessage[] {
-  const first = messages[0] as { role?: unknown; content?: unknown } | undefined;
+export function sanitizeGoogleTurnOrdering(
+  messages: AgentMessage[],
+): AgentMessage[] {
+  const first = messages[0] as
+    | { role?: unknown; content?: unknown }
+    | undefined;
   const role = first?.role;
   const content = first?.content;
   if (
@@ -147,7 +163,9 @@ export function sanitizeGoogleTurnOrdering(messages: AgentMessage[]): AgentMessa
   return [bootstrap, ...messages];
 }
 
-export function buildBootstrapContextFiles(files: WorkspaceBootstrapFile[]): EmbeddedContextFile[] {
+export function buildBootstrapContextFiles(
+  files: WorkspaceBootstrapFile[],
+): EmbeddedContextFile[] {
   const result: EmbeddedContextFile[] = [];
   for (const file of files) {
     if (file.missing) {
@@ -179,7 +197,9 @@ export function isContextOverflowError(errorMessage?: string): boolean {
   );
 }
 
-export function formatAssistantErrorText(msg: AssistantMessage): string | undefined {
+export function formatAssistantErrorText(
+  msg: AssistantMessage,
+): string | undefined {
   if (msg.stopReason !== "error") return undefined;
   const raw = (msg.errorMessage ?? "").trim();
   if (!raw) return "LLM request failed with an unknown error.";
@@ -192,7 +212,9 @@ export function formatAssistantErrorText(msg: AssistantMessage): string | undefi
     );
   }
 
-  const invalidRequest = raw.match(/"type":"invalid_request_error".*?"message":"([^"]+)"/);
+  const invalidRequest = raw.match(
+    /"type":"invalid_request_error".*?"message":"([^"]+)"/,
+  );
   if (invalidRequest?.[1]) {
     return `LLM request rejected: ${invalidRequest[1]}`;
   }
@@ -201,7 +223,9 @@ export function formatAssistantErrorText(msg: AssistantMessage): string | undefi
   return raw.length > 600 ? `${raw.slice(0, 600)}…` : raw;
 }
 
-export function isRateLimitAssistantError(msg: AssistantMessage | undefined): boolean {
+export function isRateLimitAssistantError(
+  msg: AssistantMessage | undefined,
+): boolean {
   if (!msg || msg.stopReason !== "error") return false;
   const raw = (msg.errorMessage ?? "").toLowerCase();
   if (!raw) return false;
@@ -232,18 +256,21 @@ export function isAuthErrorMessage(raw: string): boolean {
   );
 }
 
-export function isAuthAssistantError(msg: AssistantMessage | undefined): boolean {
+export function isAuthAssistantError(
+  msg: AssistantMessage | undefined,
+): boolean {
   if (!msg || msg.stopReason !== "error") return false;
   return isAuthErrorMessage(msg.errorMessage ?? "");
 }
 
 function extractSupportedValues(raw: string): string[] {
   const match =
-    raw.match(/supported values are:\s*([^\n.]+)/i) ?? raw.match(/supported values:\s*([^\n.]+)/i);
+    raw.match(/supported values are:\s*([^\n.]+)/i) ??
+    raw.match(/supported values:\s*([^\n.]+)/i);
   if (!match?.[1]) return [];
   const fragment = match[1];
-  const quoted = Array.from(fragment.matchAll(/['"]([^'"]+)['"]/g)).map((entry) =>
-    entry[1]?.trim()
+  const quoted = Array.from(fragment.matchAll(/['"]([^'"]+)['"]/g)).map(
+    (entry) => entry[1]?.trim(),
   );
   if (quoted.length > 0) {
     return quoted.filter((entry): entry is string => Boolean(entry));
@@ -308,7 +335,10 @@ export function validateGeminiTurns(messages: AgentMessage[]): AgentMessage[] {
       const currentMsg = msg as Extract<AgentMessage, { role: "assistant" }>;
 
       if (lastMsg && typeof lastMsg === "object") {
-        const lastAsst = lastMsg as Extract<AgentMessage, { role: "assistant" }>;
+        const lastAsst = lastMsg as Extract<
+          AgentMessage,
+          { role: "assistant" }
+        >;
 
         // Merge content blocks
         const mergedContent = [
@@ -370,14 +400,21 @@ export function normalizeTextForComparison(text: string): string {
  * Uses substring matching to handle LLM elaboration (e.g., wrapping in quotes,
  * adding context, or slight rephrasing that includes the original).
  */
-export function isMessagingToolDuplicate(text: string, sentTexts: string[]): boolean {
+export function isMessagingToolDuplicate(
+  text: string,
+  sentTexts: string[],
+): boolean {
   if (sentTexts.length === 0) return false;
   const normalized = normalizeTextForComparison(text);
-  if (!normalized || normalized.length < MIN_DUPLICATE_TEXT_LENGTH) return false;
+  if (!normalized || normalized.length < MIN_DUPLICATE_TEXT_LENGTH)
+    return false;
   return sentTexts.some((sent) => {
     const normalizedSent = normalizeTextForComparison(sent);
-    if (!normalizedSent || normalizedSent.length < MIN_DUPLICATE_TEXT_LENGTH) return false;
+    if (!normalizedSent || normalizedSent.length < MIN_DUPLICATE_TEXT_LENGTH)
+      return false;
     // Substring match: either text contains the other
-    return normalized.includes(normalizedSent) || normalizedSent.includes(normalized);
+    return (
+      normalized.includes(normalizedSent) || normalizedSent.includes(normalized)
+    );
   });
 }

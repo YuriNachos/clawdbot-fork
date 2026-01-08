@@ -11,9 +11,14 @@ import {
   sanitizeSessionMessagesImages,
   validateGeminiTurns,
 } from "./pi-embedded-helpers.js";
-import { DEFAULT_AGENTS_FILENAME, type WorkspaceBootstrapFile } from "./workspace.js";
+import {
+  DEFAULT_AGENTS_FILENAME,
+  type WorkspaceBootstrapFile,
+} from "./workspace.js";
 
-const makeFile = (overrides: Partial<WorkspaceBootstrapFile>): WorkspaceBootstrapFile => ({
+const makeFile = (
+  overrides: Partial<WorkspaceBootstrapFile>,
+): WorkspaceBootstrapFile => ({
   name: DEFAULT_AGENTS_FILENAME,
   path: "/tmp/AGENTS.md",
   content: "",
@@ -182,7 +187,9 @@ describe("buildBootstrapContextFiles", () => {
     const long = `${head}${tail}`;
     const files = [makeFile({ content: long })];
     const [result] = buildBootstrapContextFiles(files);
-    expect(result?.content).toContain("[...truncated, read AGENTS.md for full content...]");
+    expect(result?.content).toContain(
+      "[...truncated, read AGENTS.md for full content...]",
+    );
     expect(result?.content.length).toBeLessThan(long.length);
     expect(result?.content.startsWith(long.slice(0, 120))).toBe(true);
     expect(result?.content.endsWith(long.slice(-120))).toBe(true);
@@ -226,7 +233,9 @@ describe("sanitizeGoogleTurnOrdering", () => {
     const input = [
       {
         role: "assistant",
-        content: [{ type: "toolCall", id: "call_1", name: "bash", arguments: {} }],
+        content: [
+          { type: "toolCall", id: "call_1", name: "bash", arguments: {} },
+        ],
       },
     ] satisfies AgentMessage[];
 
@@ -260,7 +269,9 @@ describe("normalizeTextForComparison", () => {
   });
 
   it("handles mixed normalization", () => {
-    expect(normalizeTextForComparison("  Hello 👋   WORLD  🌍  ")).toBe("hello world");
+    expect(normalizeTextForComparison("  Hello 👋   WORLD  🌍  ")).toBe(
+      "hello world",
+    );
   });
 });
 
@@ -275,13 +286,17 @@ describe("isMessagingToolDuplicate", () => {
 
   it("detects exact duplicates", () => {
     expect(
-      isMessagingToolDuplicate("Hello, this is a test message!", ["Hello, this is a test message!"])
+      isMessagingToolDuplicate("Hello, this is a test message!", [
+        "Hello, this is a test message!",
+      ]),
     ).toBe(true);
   });
 
   it("detects duplicates with different casing", () => {
     expect(
-      isMessagingToolDuplicate("HELLO, THIS IS A TEST MESSAGE!", ["hello, this is a test message!"])
+      isMessagingToolDuplicate("HELLO, THIS IS A TEST MESSAGE!", [
+        "hello, this is a test message!",
+      ]),
     ).toBe(true);
   });
 
@@ -289,15 +304,16 @@ describe("isMessagingToolDuplicate", () => {
     expect(
       isMessagingToolDuplicate("Hello! 👋 This is a test message!", [
         "Hello! This is a test message!",
-      ])
+      ]),
     ).toBe(true);
   });
 
   it("detects substring duplicates (LLM elaboration)", () => {
     expect(
-      isMessagingToolDuplicate('I sent the message: "Hello, this is a test message!"', [
-        "Hello, this is a test message!",
-      ])
+      isMessagingToolDuplicate(
+        'I sent the message: "Hello, this is a test message!"',
+        ["Hello, this is a test message!"],
+      ),
     ).toBe(true);
   });
 
@@ -305,7 +321,7 @@ describe("isMessagingToolDuplicate", () => {
     expect(
       isMessagingToolDuplicate("Hello, this is a test message!", [
         'I sent the message: "Hello, this is a test message!"',
-      ])
+      ]),
     ).toBe(true);
   });
 
@@ -313,7 +329,7 @@ describe("isMessagingToolDuplicate", () => {
     expect(
       isMessagingToolDuplicate("This is completely different content.", [
         "Hello, this is a test message!",
-      ])
+      ]),
     ).toBe(false);
   });
 });
@@ -343,7 +359,9 @@ describe("sanitizeSessionMessagesImages", () => {
     const assistantContent = (result[1] as { content: unknown }).content;
     expect(Array.isArray(assistantContent)).toBe(true);
     expect(assistantContent).toHaveLength(1); // Only toolCall remains, empty text block removed
-    expect((assistantContent as Array<{ type: string }>)[0].type).toBe("toolCall");
+    expect((assistantContent as Array<{ type: string }>)[0].type).toBe(
+      "toolCall",
+    );
   });
 
   it("preserves non-empty text blocks in assistant messages", async () => {
