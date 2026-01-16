@@ -1,7 +1,7 @@
 {
   "name": "clawdbot",
   "version": "2026.1.8-2",
-  "description": "WhatsApp gateway CLI (Baileys web) with Pi RPC agent",
+  "description": "Personal AI assistant with multi-provider messaging (WhatsApp, Telegram, Slack, Discord, Signal, iMessage, WebChat) and Pi RPC agent",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
