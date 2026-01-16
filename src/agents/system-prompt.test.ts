@@ -72,13 +72,13 @@ describe("buildAgentSystemPrompt", () => {
     expect(prompt).toContain("- Opus: anthropic/claude-opus-4-5");
   });
 
-  it("adds ClaudeBot self-update guidance when gateway tool is available", () => {
+  it("adds Clawdbot self-update guidance when gateway tool is available", () => {
     const prompt = buildAgentSystemPrompt({
       workspaceDir: "/tmp/clawd",
       toolNames: ["gateway", "bash"],
     });
 
-    expect(prompt).toContain("## ClaudeBot Self-Update");
+    expect(prompt).toContain("## Clawdbot Self-Update");
     expect(prompt).toContain("config.apply");
     expect(prompt).toContain("update.run");
   });
