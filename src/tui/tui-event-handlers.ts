@@ -71,11 +71,13 @@ export function createEventHandlers(context: EventHandlerContext) {
       chatLog.addSystem("run aborted");
       state.activeChatRunId = null;
       setActivityStatus("aborted");
+      void refreshSessionInfo(); // Refresh token counts after aborted run
     }
     if (evt.state === "error") {
       chatLog.addSystem(`run error: ${evt.errorMessage ?? "unknown"}`);
       state.activeChatRunId = null;
       setActivityStatus("error");
+      void refreshSessionInfo(); // Refresh token counts after error run
     }
     tui.requestRender();
   };
